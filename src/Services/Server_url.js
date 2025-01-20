@@ -1,1 +1,1 @@
-export const Server_url ='https://movie-player-json-server.onrender.com'
+export const Server_url = "https://movie-player-json-server.onrender.com";
