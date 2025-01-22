@@ -1,25 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { deleteHistoryApi, getHistoryApi } from '../Services/allApi';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { deleteHistoryApi, getHistoryApi } from "../Services/allApi";
+import PropTypes from "prop-types";
 
 function Watch() {
-  const[history,setHistory]=useState([])
-  const getAllHistory=async()=>{
-    const result=await getHistoryApi()
-    if(result.status>=200&&result.status<300){
-      setHistory(result.data)
-    }
- 
-  }
-  useEffect(() => {
-    getAllHistory()
-  }, [])
-  //api delete video history from watch history
-  const deleteHistory=async(vId)=>{
-await deleteHistoryApi(vId)
+  const [history, setHistory] = useState([]);
 
-getAllHistory()
-  }
+  const getAllHistory = async () => {
+    try {
+      const result = await getHistoryApi();
+      if (result.status >= 200 && result.status < 300) {
+        setHistory(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAllHistory();
+  }, []);
+
+  // API delete video history from watch history
+  const deleteHistory = async (vId) => {
+    try {
+      await deleteHistoryApi(vId);
+      getAllHistory();
+    } catch (error) {
+      console.error("Failed to delete history:", error);
+    }
+  };
+
   return (
     <>
       <div className="w-full min-h-[80vh] max-h-fit bg-gray-800 text-white py-10">
@@ -40,27 +51,45 @@ getAllHistory()
                 <th className="p-3">Caption</th>
                 <th className="p-3">Video Link</th>
                 <th className="p-3">Time Stamp</th>
-                <th className="p-3"><i className="fa-solid fa-ellipsis-vertical text-white"></i></th>
+                <th className="p-3">
+                  <i className="fa-solid fa-ellipsis-vertical text-white"></i>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {
-                history?.length>0? history?.map((video,index)=>(
-
-                  <tr className="bg-gray-800 border-b border-gray-700 hover:bg-gray-700 transition duration-300" key={index}>
-                    <td className="p-3">{index+1}</td>
+              {history?.length > 0 ? (
+                history?.map((video, index) => (
+                  <tr
+                    className="bg-gray-800 border-b border-gray-700 hover:bg-gray-700 transition duration-300"
+                    key={video.id}
+                  >
+                    <td className="p-3">{index + 1}</td>
                     <td className="p-3">{video?.videoCaption}</td>
-                    <td className="p-3"><a href={video?.videoLink} className="text-teal-400 hover:underline" target="_blank" rel="noopener noreferrer">{ video?.videoLink}</a></td>
+                    <td className="p-3">
+                      <a
+                        href={video?.videoLink}
+                        className="text-teal-400 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {video?.videoLink}
+                      </a>
+                    </td>
                     <td className="p-3">{video?.timeStamp}</td>
-                    <td className="p-3"><button onClick={() => deleteHistory(video.id)}><i className="fa-solid fa-trash text-red-600 cursor-pointer hover:text-red-800" ></i></button></td>
+                    <td className="p-3">
+                      <button onClick={() => deleteHistory(video.id)}>
+                        <i className="fa-solid fa-trash text-red-600 cursor-pointer hover:text-red-800"></i>
+                      </button>
+                    </td>
                   </tr>
-
-
-                )):
-
-                  <tr><div className='mx-auto text-center text-red-700 text-2xl'><h1>empty history </h1></div></tr>
-              }
-             
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="text-center text-red-700 text-2xl">
+                    Empty history
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -68,5 +97,10 @@ getAllHistory()
     </>
   );
 }
+
+Watch.propTypes = {
+  deleteHistory: PropTypes.func,
+  getAllHistory: PropTypes.func,
+};
 
 export default Watch;

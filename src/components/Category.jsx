@@ -1,6 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { addCategoriesApi, deleteCategoriesApi, getAVideoApi, getCategoriesApi, updateCateogryApi } from '../Services/allApi';
-import VideoCard from './VideoCard';
+import React, { useEffect, useState } from "react";
+import {
+  addCategoriesApi,
+  deleteCategoriesApi,
+  getAVideoApi,
+  getCategoriesApi,
+  updateCateogryApi,
+} from "../Services/allApi";
+import VideoCard from "./VideoCard";
+import PropTypes from "prop-types";
 
 function Category({ removeCategoryVideoResponse }) {
   const [allCategories, setAllCategories] = useState([]);
@@ -14,40 +21,47 @@ function Category({ removeCategoryVideoResponse }) {
 
   const handleShow = () => setShow(true);
 
-  // Add categories
   const handleAddCategory = async () => {
     if (category) {
-      await addCategoriesApi({ name: category, allVideos: [] });
-      handleClose();
-      getAllCategories(); // Refresh categories after adding a new one
+      try {
+        await addCategoriesApi({ name: category, allVideos: [] });
+        handleClose();
+        getAllCategories(); // Refresh categories after adding a new one
+      } catch (error) {
+        console.error("Error adding category:", error);
+      }
     } else {
       alert("Please fill the form!!");
     }
   };
 
-  // Get categories JSON to frontend to view
   const getAllCategories = async () => {
-    const result = await getCategoriesApi();
-    setAllCategories(result.data);
+    try {
+      const result = await getCategoriesApi();
+      setAllCategories(result.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
   };
 
   useEffect(() => {
     getAllCategories();
   }, [removeCategoryVideoResponse]);
 
-  // Delete categories
   const handleDeleteCategories = async (cId) => {
-    await deleteCategoriesApi(cId);
-    getAllCategories(); // Refresh categories after deleting one
+    try {
+      await deleteCategoriesApi(cId);
+      getAllCategories(); // Refresh categories after deleting one
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    }
   };
 
-  // Handle dragging over category
   const dragOverCategory = (e) => {
     e.preventDefault();
     console.log("Dragging over category");
   };
 
-  // Handle video drop
   const videoDropped = async (e, categoryId) => {
     e.preventDefault(); // Prevent default behavior
     const videoId = e.dataTransfer.getData("videoId");
@@ -55,34 +69,38 @@ function Category({ removeCategoryVideoResponse }) {
       `Video dropped with vId: ${videoId}, inside category id: ${categoryId}`
     );
 
-    // Fetch the video data
-    const { data } = await getAVideoApi(videoId);
-    console.log(data);
+    try {
+      const { data } = await getAVideoApi(videoId);
+      console.log(data);
 
-    // Get category details where we have add videos
-    let selectedCategory = allCategories.find((item) => item.id === categoryId);
-
-    if (selectedCategory) {
-      // Check if the video already exists in the category
-      const hasVideo = selectedCategory.allVideos.some(
-        (video) => video.id === videoId
+      let selectedCategory = allCategories.find(
+        (item) => item.id === categoryId
       );
 
-      if (!hasVideo) {
-        selectedCategory.allVideos.push(data);
-        await updateCateogryApi(categoryId, selectedCategory);
-        getAllCategories();
-        console.log(selectedCategory);
-      } else {
-        console.log("Video already exists in the category");
+      if (selectedCategory) {
+        const hasVideo = selectedCategory.allVideos.some(
+          (video) => video.id === videoId
+        );
+
+        if (!hasVideo) {
+          selectedCategory.allVideos.push(data);
+          await updateCateogryApi(categoryId, selectedCategory);
+          getAllCategories();
+          console.log(selectedCategory);
+        } else {
+          console.log("Video already exists in the category");
+        }
       }
+    } catch (error) {
+      console.error("Error handling video drop:", error);
     }
   };
+
   const dragStarted = (e, videoId, categoryId) => {
     console.log(
-      `Drag started from category id: ${categoryId} with video id:${videoId}`
+      `Drag started from category id: ${categoryId} with video id: ${videoId}`
     );
-    let dataShare = { videoId, categoryId };
+    const dataShare = { videoId, categoryId };
     e.dataTransfer.setData("removeVideoDetails", JSON.stringify(dataShare));
   };
 
@@ -141,10 +159,10 @@ function Category({ removeCategoryVideoResponse }) {
         {allCategories.length > 0 ? (
           allCategories.map((item, index) => (
             <div
-              onDragOver={(e) => dragOverCategory(e)}
+              onDragOver={dragOverCategory}
               droppable="true"
               onDrop={(e) => videoDropped(e, item.id)}
-              key={index}
+              key={item.id}
               className="card border-2 border-white rounded-xl text-center p-3 m-1 flex flex-col items-center"
             >
               <h1 className="text-lg mb-2">{item.name}</h1>
@@ -161,7 +179,7 @@ function Category({ removeCategoryVideoResponse }) {
                     <div
                       draggable
                       onDragStart={(e) => dragStarted(e, video.id, item.id)}
-                      key={index}
+                      key={video.id}
                       className="w-full"
                     >
                       <VideoCard insideCategory={true} displayData={video} />
@@ -181,5 +199,9 @@ function Category({ removeCategoryVideoResponse }) {
     </>
   );
 }
+
+Category.propTypes = {
+  removeCategoryVideoResponse: PropTypes.object.isRequired,
+};
 
 export default Category;

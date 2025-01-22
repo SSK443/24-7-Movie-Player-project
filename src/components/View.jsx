@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import VideoCard from "./VideoCard";
-import { getAllVideosApi, getSingleCategoriesApi, updateCateogryApi } from "../Services/allApi";
+import {
+  getAllVideosApi,
+  getSingleCategoriesApi,
+  updateCateogryApi,
+} from "../Services/allApi";
+import PropTypes from "prop-types";
 
 function View({ uploadVideoResponse, setRemoveCategoryVideoResponse }) {
   const [allVideos, setAllVideos] = useState([]);
@@ -26,10 +31,7 @@ function View({ uploadVideoResponse, setRemoveCategoryVideoResponse }) {
   };
 
   useEffect(() => {
-    const fetchVideos = async () => {
-      await getAllVideos();
-    };
-    fetchVideos();
+    getAllVideos();
   }, [uploadVideoResponse, deleteVideoResponse]);
 
   const handleCategoryVideo = async (e) => {
@@ -40,15 +42,13 @@ function View({ uploadVideoResponse, setRemoveCategoryVideoResponse }) {
       const { data } = await getSingleCategoriesApi(categoryId);
       const updatedVideoList = data.allVideos.filter((e) => e.id !== videoId);
       const { id, categoryName } = data;
-      const result= await updateCateogryApi(categoryId, {
+      const result = await updateCateogryApi(categoryId, {
         id,
         categoryName,
         allVideos: updatedVideoList,
       });
-      setRemoveCategoryVideoResponse(result.data)
+      setRemoveCategoryVideoResponse(result.data);
       console.log(updatedVideoList);
-
-      console.log(data);
     } catch (error) {
       console.error(
         "An error occurred while fetching category videos: ",
@@ -74,8 +74,8 @@ function View({ uploadVideoResponse, setRemoveCategoryVideoResponse }) {
         <div className="text-red-600 text-2xl animate-pulse">{error}</div>
       ) : allVideos.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {allVideos.map((video, index) => (
-            <div className="mb-4" key={index}>
+          {allVideos.map((video) => (
+            <div className="mb-4" key={video.id}>
               <VideoCard
                 displayData={video}
                 setDeleteVideo={setDeleteVideoResponse}
@@ -91,5 +91,10 @@ function View({ uploadVideoResponse, setRemoveCategoryVideoResponse }) {
     </div>
   );
 }
+
+View.propTypes = {
+  uploadVideoResponse: PropTypes.array.isRequired,
+  setRemoveCategoryVideoResponse: PropTypes.func.isRequired,
+};
 
 export default View;
